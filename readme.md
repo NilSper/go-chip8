@@ -1,48 +1,6 @@
 ## CHIP 8 emulator/interpreter
 
 
-
-debug:
-draw the ball:
-PC: 274 - opcode: 0xD671
-
-
-next location draw:
-PC: 274 - opcode: 0xD671
-PC: 276 - opcode: 0x122A - jump back to beginning
-
-PC: 22A - opcode: 0xA2EA
-PC: 22C - opcode: 0xDAB6 - draw
-PC: 22E - opcode: 0xDCD6 - draw
-PC: 230 - opcode: 0x6001
-PC: 232 - opcode: 0xE0A1 - key input
-PC: 236 - opcode: 0x6004
-PC: 238 - opcode: 0xE0A1 - key input
-PC: 23C - opcode: 0x601F
-PC: 23E - opcode: 0x8B02
-PC: 240 - opcode: 0xDAB6 - draw
-PC: 242 - opcode: 0x600C
-PC: 244 - opcode: 0xE0A1 - key input
-PC: 248 - opcode: 0x600D
-PC: 24A - opcode: 0xE0A1 - key input
-PC: 24E - opcode: 0x601F
-PC: 250 - opcode: 0x8D02
-PC: 252 - opcode: 0xDCD6 - draw
-PC: 254 - opcode: 0xA2F0
-PC: 256 - opcode: 0xD671 - draw
-PC: 258 - opcode: 0x8684
-PC: 25A - opcode: 0x8794
-PC: 25C - opcode: 0x603F
-PC: 25E - opcode: 0x8602
-PC: 260 - opcode: 0x611F
-PC: 262 - opcode: 0x8712
-PC: 264 - opcode: 0x4602
-PC: 268 - opcode: 0x463F
-PC: 26C - opcode: 0x471F
-PC: 270 - opcode: 0x4700
-PC: 274 - opcode: 0xD671
-
-
 ### get key
 
 use scancodes instead of key string values

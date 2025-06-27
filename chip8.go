@@ -68,7 +68,7 @@ var fontSet = [80]uint8{
 	0xF0, 0x80, 0xF0, 0x80, 0x80, // F
 }
 
-func runKeyboardInput() (err error) {
+func runKeyboardInput() {
 	// var window *sdl.Window
 
 	// if err = sdl.Init(sdl.INIT_EVERYTHING); err != nil {
@@ -88,75 +88,72 @@ func runKeyboardInput() (err error) {
 			switch t := event.(type) {
 			case *sdl.QuitEvent:
 				running = false
+				fmt.Println("Quit event")
 			case *sdl.KeyboardEvent:
 				scanCode := t.Keysym.Scancode
-				keyCode := t.Keysym.Sym
-				var key = ""
-				// reset key states
-				keys = [len(keys)]uint8{}
+				// keyCode := t.Keysym.Sym
+				// var key = ""
 
-				// don't act on key releases
-				if t.State == sdl.RELEASED {
-					break
+				var isKeyPressed uint8 = 0
+				if t.State == sdl.PRESSED {
+					isKeyPressed = 1
 				}
 				switch scanCode {
 				case sdl.SCANCODE_1:
-					keys[0x1] = 1
+					keys[0x1] = isKeyPressed
 				case sdl.SCANCODE_2:
-					keys[0x2] = 1
+					keys[0x2] = isKeyPressed
 				case sdl.SCANCODE_3:
-					keys[0x3] = 1
+					keys[0x3] = isKeyPressed
 				case sdl.SCANCODE_4:
-					keys[0xC] = 1
+					keys[0xC] = isKeyPressed
 				case sdl.SCANCODE_Q:
-					keys[0x4] = 1
+					keys[0x4] = isKeyPressed
 				case sdl.SCANCODE_W:
-					keys[0x5] = 1
+					keys[0x5] = isKeyPressed
 				case sdl.SCANCODE_E:
-					keys[0x6] = 1
+					keys[0x6] = isKeyPressed
 				case sdl.SCANCODE_R:
-					keys[0xD] = 1
+					keys[0xD] = isKeyPressed
 				case sdl.SCANCODE_A:
-					keys[0x7] = 1
+					keys[0x7] = isKeyPressed
 				case sdl.SCANCODE_S:
-					keys[0x8] = 1
+					keys[0x8] = isKeyPressed
 				case sdl.SCANCODE_D:
-					keys[0x9] = 1
+					keys[0x9] = isKeyPressed
 				case sdl.SCANCODE_F:
-					keys[0xE] = 1
+					keys[0xE] = isKeyPressed
 				case sdl.SCANCODE_Z:
-					keys[0xA] = 1
+					keys[0xA] = isKeyPressed
 				case sdl.SCANCODE_X:
-					keys[0x0] = 1
+					keys[0x0] = isKeyPressed
 				case sdl.SCANCODE_C:
-					keys[0xB] = 1
+					keys[0xB] = isKeyPressed
 				case sdl.SCANCODE_V:
-					keys[0xF] = 1
+					keys[0xF] = isKeyPressed
 				}
 
-				if keyCode < 10000 {
-					if key != "" {
-						key += " + "
-					}
+				// if keyCode < 10000 {
+				// 	if key != "" {
+				// 		key += " + "
+				// 	}
 
-					// If the key is held down, this will fire
-					if t.State == sdl.PRESSED {
-						key += string(keyCode) + " pressed"
-					}
+				// 	// If the key is held down, this will fire
+				// 	if t.State == sdl.PRESSED {
+				// 		key += string(keyCode) + " pressed"
+				// 	}
 
-				}
+				// }
 
-				if key != "" {
-					fmt.Printf("Scancode: %d ", scanCode)
-					fmt.Println(key)
-				}
+				// if key != "" {
+				// 	fmt.Printf("Scancode: %d ", scanCode)
+				// 	fmt.Println(key)
+				// }
 			}
 		}
 
 		sdl.Delay(16)
 	}
-
-	return nil
 }
 
 func setupGraphics(window **sdl.Window, renderer **sdl.Renderer) {
@@ -180,6 +177,7 @@ func drawGraphics(renderer *sdl.Renderer) {
 	// fmt.Println("Drawing the picture", screenState[1])
 	var white = sdl.Color{R: 255, G: 255, B: 255, A: 255}
 
+	clearScreen(renderer)
 	for i := range int32(len(screenState)) {
 		if screenState[i] != 0 {
 			var row = i / winWidth
@@ -197,7 +195,7 @@ func drawGraphics(renderer *sdl.Renderer) {
 	}
 
 	renderer.Present()
-	sdl.Delay(50)
+	sdl.Delay(16)
 }
 
 func main() {
@@ -216,6 +214,7 @@ func main() {
 
 	// TODO: need to setup keyboard input ... as with graphics + check each cycle
 
+	go runKeyboardInput()
 	// if err := runKeyboardInput(); err != nil {
 	// 	os.Exit(1)
 	// }
@@ -261,7 +260,7 @@ func emulateCycle() {
 	opcode = (uint16)(memory[programCounter])<<8 | (uint16)(memory[programCounter+1])
 
 	// Decode + execute Opcode
-	fmt.Printf("PC: %X - opcode: 0x%X\n", programCounter, opcode)
+	// fmt.Printf("PC: %X - opcode: 0x%X\n", programCounter, opcode)
 	switch opcode {
 	case 0x00E0:
 		// clear display
@@ -277,6 +276,8 @@ func emulateCycle() {
 		case 0xA000: // ANNN
 			indexRegister = opcode & 0x0FFF
 			programCounter += 2
+		case 0xB000: // BNNN
+			programCounter = (opcode & 0x0FFF) + uint16(vRegisters[0])
 		case 0x1000: // 1NNN
 			// jump to address NNN --> no need to store current location
 			programCounter = opcode & 0x0FFF
@@ -340,12 +341,12 @@ func emulateCycle() {
 				programCounter += 2
 			case 0x0004:
 				var checkValue = uint16(vRegisters[xValue]) + uint16(vRegisters[yValue])
-				vRegisters[xValue] = uint8(checkValue)
 				if checkValue > uint16(vRegisters[xValue]) {
 					vRegisters[0xF] = 1
 				} else {
 					vRegisters[0xF] = 0
 				}
+				vRegisters[xValue] += vRegisters[yValue]
 				programCounter += 2
 			case 0x0005:
 				if vRegisters[xValue] >= vRegisters[yValue] {
@@ -403,6 +404,9 @@ func emulateCycle() {
 				for xLine := int32(0); xLine < 8; xLine++ {
 					if (pixel & (0x80 >> xLine)) != 0 {
 						screenIndex := xIndex + xLine + ((yIndex + yLine) * winWidth)
+						if screenIndex > winWidth*winHeight {
+							screenIndex = screenIndex % (winWidth * winHeight)
+						}
 						if screenState[screenIndex] == 1 {
 							vRegisters[0xF] = 1
 						}
