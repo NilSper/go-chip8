@@ -68,20 +68,7 @@ var fontSet = [80]uint8{
 	0xF0, 0x80, 0xF0, 0x80, 0x80, // F
 }
 
-func runKeyboardInput() {
-	// var window *sdl.Window
-
-	// if err = sdl.Init(sdl.INIT_EVERYTHING); err != nil {
-	// 	return err
-	// }
-	// defer sdl.Quit()
-
-	// window, err = sdl.CreateWindow("Input", sdl.WINDOWPOS_UNDEFINED, sdl.WINDOWPOS_UNDEFINED, 800, 600, sdl.WINDOW_SHOWN)
-	// if err != nil {
-	// 	return err
-	// }
-	// defer window.Destroy()
-
+func handleKeyboardInput() {
 	running := true
 	for running {
 		for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
@@ -156,25 +143,28 @@ func runKeyboardInput() {
 	}
 }
 
-func setupGraphics(window **sdl.Window, renderer **sdl.Renderer) {
+func setupGraphics(window **sdl.Window, renderer **sdl.Renderer) error {
 	var err error
 	if err = sdl.Init(sdl.INIT_EVERYTHING); err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to initialize SDL: %s\n", err)
+		return fmt.Errorf("failed to initialize SDL: \n--> %w", err)
 	}
 
 	if *window, err = sdl.CreateWindow(winTitle, sdl.WINDOWPOS_UNDEFINED, sdl.WINDOWPOS_UNDEFINED, sdlWidth, sdlHeight, sdl.WINDOW_SHOWN); err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to create window: %s\n", err)
+		return fmt.Errorf("failed to create window: \n--> %w", err)
 	}
 
 	if *renderer, err = sdl.CreateRenderer(*window, -1, sdl.RENDERER_ACCELERATED); err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to create renderer: %s\n", err)
+		return fmt.Errorf("failed to create renderer: \n--> %w", err)
 	}
 	clearScreen(*renderer)
 	sdl.Delay(1000)
+	return nil
 }
 
 func drawGraphics(renderer *sdl.Renderer) {
-	// fmt.Println("Drawing the picture", screenState[1])
 	var white = sdl.Color{R: 255, G: 255, B: 255, A: 255}
 
 	clearScreen(renderer)
@@ -201,26 +191,28 @@ func drawGraphics(renderer *sdl.Renderer) {
 func main() {
 	fmt.Println("Starting chip8 emulation..")
 
-	var path = "c8games/PONG" //"c8games/4-flags.ch8" //
+	var path = "c8games/PONG2" //"c8games/4-flags.ch8" //
+	var err error
 
 	var window *sdl.Window
 	var renderer *sdl.Renderer
-	setupGraphics(&window, &renderer)
+	err = setupGraphics(&window, &renderer)
 	defer sdl.Quit()
 	defer window.Destroy()
 	defer renderer.Destroy()
+	if err != nil {
+		fmt.Println("program crashed when setting up graphics \n--> ", err)
+		return
+	}
 
-	// setupInput()
+	// TODO use a channel to exit goroutine in case of err
+	go handleKeyboardInput()
 
-	// TODO: need to setup keyboard input ... as with graphics + check each cycle
-
-	go runKeyboardInput()
-	// if err := runKeyboardInput(); err != nil {
-	// 	os.Exit(1)
-	// }
-
-	initialize()
-	loadGame(path)
+	initializeStates()
+	if err = loadGame(path); err != nil {
+		fmt.Println("program crashed when loading game \n--> ", err)
+		return
+	}
 
 	// Emulation loop
 	for {
@@ -236,20 +228,9 @@ func main() {
 			clearScreen(renderer)
 			clearFlag = false
 		}
-
-		// Store the key press state
-		// setKeys()
 	}
 
 }
-
-// func setKeys() {
-// 	panic("unimplemented")
-// }
-
-// func setupInput() {
-// 	panic("unimplemented")
-// }
 
 func emulateCycle() {
 	// Fetch Opcode
@@ -532,7 +513,7 @@ func spriteAddr(vx uint8) uint16 {
 // 	fmt.Print("\n")
 // }
 
-func initialize() {
+func initializeStates() {
 	// Initializes registers and memory once
 	fmt.Println("Init the state")
 
@@ -560,18 +541,18 @@ func initialize() {
 
 }
 
-func loadGame(path string) {
+func loadGame(path string) (err error) {
 	fmt.Println("loading the game: ", path)
 
 	// read entire file content as binary array
-
 	buffer, err := os.ReadFile(path)
 	if err != nil {
-		// TODO: proper error handling
-		panic(err)
+		return fmt.Errorf("loadGame failed while trying to read file %s \n--> %w", path, err)
 	}
 
 	for i := range buffer {
 		memory[i+512] = buffer[i]
 	}
+
+	return nil
 }
