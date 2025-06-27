@@ -217,7 +217,11 @@ func main() {
 	// Emulation loop
 	for {
 		// Emulate one cycle
-		emulateCycle()
+
+		if err = emulateCycle(); err != nil {
+			fmt.Println("program crashed when emulating a cycle \n--> ", err)
+			return
+		}
 
 		if drawFlag {
 			drawGraphics(renderer)
@@ -232,7 +236,7 @@ func main() {
 
 }
 
-func emulateCycle() {
+func emulateCycle() error {
 	// Fetch Opcode
 
 	// each memory state is 8 bits. An Opcode consists of 16 bits. Thus, we need to merge
@@ -264,7 +268,7 @@ func emulateCycle() {
 			programCounter = opcode & 0x0FFF
 			if opcode == 0x1228 {
 				sdl.Delay(3000)
-				panic("final opcode")
+				return fmt.Errorf("final opcode 0x%X", opcode)
 			}
 		case 0x2000: // 2NNN
 			// call subroutine at NNN
@@ -457,12 +461,10 @@ func emulateCycle() {
 				}
 				programCounter += 2
 			default:
-				fmt.Printf("Unknown 0xF... opcode 0x%X\n", opcode)
-				panic("unknown code")
+				return fmt.Errorf("unknown 0xF... opcode 0x%X", opcode)
 			}
 		default:
-			fmt.Printf("Unknown opcode 0x%X\n", opcode)
-			panic("unknown code")
+			return fmt.Errorf("unknown opcode 0x%X", opcode)
 		}
 	}
 
@@ -479,6 +481,7 @@ func emulateCycle() {
 		}
 		soundTimer--
 	}
+	return nil
 
 }
 
