@@ -3,6 +3,7 @@ package helpers
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/veandco/go-sdl2/gfx"
 	"github.com/veandco/go-sdl2/mix"
@@ -92,7 +93,7 @@ func ClearScreen(renderer *sdl.Renderer) {
 	renderer.Present()
 }
 
-func SetupGraphics(window **sdl.Window, renderer **sdl.Renderer) error {
+func SetupGraphicsAndAudio(window **sdl.Window, renderer **sdl.Renderer) error {
 	var err error
 	if err = sdl.Init(sdl.INIT_EVERYTHING); err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to initialize SDL: %s\n", err)
@@ -109,6 +110,14 @@ func SetupGraphics(window **sdl.Window, renderer **sdl.Renderer) error {
 		return fmt.Errorf("failed to create renderer: \n--> %w", err)
 	}
 	ClearScreen(*renderer)
+
+	if err := mix.Init(mix.INIT_MP3); err != nil {
+		return fmt.Errorf("failed to init mp3: \n--> %w", err)
+	}
+
+	if err := mix.OpenAudio(22050, mix.DEFAULT_FORMAT, 2, 4096); err != nil {
+		return fmt.Errorf("failed to open audio: \n--> %w", err)
+	}
 	sdl.Delay(1000)
 	return nil
 }
@@ -138,24 +147,12 @@ func DrawGraphics(renderer *sdl.Renderer) {
 }
 
 func playBeep() error {
-	if err := mix.Init(mix.INIT_MP3); err != nil {
-		return fmt.Errorf("failed to init mp3: \n--> %w", err)
-	}
-	defer mix.Quit()
-
-	if err := mix.OpenAudio(22050, mix.DEFAULT_FORMAT, 2, 4096); err != nil {
-		return fmt.Errorf("failed to open audio: \n--> %w", err)
-	}
-	defer mix.CloseAudio()
-
-	if music, err := mix.LoadMUS("helpers/test.mp3"); err != nil {
+	if music, err := mix.LoadMUS("helpers/test.wav"); err != nil {
 		return fmt.Errorf("failed to open file: \n--> %w", err)
-	} else if err = music.Play(1); err != nil {
+	} else if err := music.Play(1); err != nil {
 		return fmt.Errorf("failed to play music: \n--> %w", err)
 	} else {
-		// diff := time.Since(start)
-		// fmt.Println("Took: ", diff.Microseconds()/1000, " ms")
-		sdl.Delay(19)
+		time.Sleep(200 * time.Millisecond)
 		music.Free()
 	}
 	fmt.Println("BEEP")

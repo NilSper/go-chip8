@@ -4,6 +4,7 @@ import (
 	"chip8/helpers"
 	"fmt"
 
+	"github.com/veandco/go-sdl2/mix"
 	"github.com/veandco/go-sdl2/sdl"
 )
 
@@ -18,10 +19,12 @@ func main() {
 
 	var window *sdl.Window
 	var renderer *sdl.Renderer
-	err = helpers.SetupGraphics(&window, &renderer)
+	err = helpers.SetupGraphicsAndAudio(&window, &renderer)
 	defer sdl.Quit()
 	defer window.Destroy()
 	defer renderer.Destroy()
+	defer mix.Quit()
+	defer mix.CloseAudio()
 	if err != nil {
 		fmt.Println("program crashed when setting up graphics \n--> ", err)
 		return
