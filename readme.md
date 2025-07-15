@@ -23,3 +23,6 @@ Keypad                   Keyboard
 |A|0|B|F|                |Z|X|C|V|
 +-+-+-+-+                +-+-+-+-+
 </pre>
+
+
+Note: ROMs in the c8games dir a in the public domain
