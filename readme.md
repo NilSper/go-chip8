@@ -1,7 +1,7 @@
 ## CHIP 8 emulator/interpreter
 
 
-
+<pre>
 Keypad                   Keyboard
 +-+-+-+-+                +-+-+-+-+
 |1|2|3|C|                |1|2|3|4|
@@ -12,4 +12,4 @@ Keypad                   Keyboard
 +-+-+-+-+                +-+-+-+-+
 |A|0|B|F|                |Z|X|C|V|
 +-+-+-+-+                +-+-+-+-+
-
+</pre>
