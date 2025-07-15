@@ -14,7 +14,7 @@ func main() {
 	var drawFlag bool
 	var clearFlag bool
 
-	var path = "c8games/PONG2" //"c8games/4-flags.ch8" //
+	var path = "c8games/PONG"
 	var err error
 
 	var window *sdl.Window
@@ -36,7 +36,6 @@ func main() {
 		return
 	}
 
-	// TODO use a channel to exit goroutine in case of err
 	go helpers.HandleKeyboardInput()
 
 	// Emulation loop

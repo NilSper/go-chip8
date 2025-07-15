@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"math/rand/v2"
 	"os"
-
-	"github.com/veandco/go-sdl2/sdl"
 )
 
 // GAME STATE
@@ -86,10 +84,6 @@ func EmulateCycle(clearFlag *bool, drawFlag *bool) error {
 		case 0x1000: // 1NNN
 			// jump to address NNN --> no need to store current location
 			programCounter = opcode & 0x0FFF
-			if opcode == 0x1228 {
-				sdl.Delay(3000)
-				return fmt.Errorf("final opcode 0x%X", opcode)
-			}
 		case 0x2000: // 2NNN
 			// call subroutine at NNN
 			stack[stackPointer] = programCounter
@@ -181,6 +175,8 @@ func EmulateCycle(clearFlag *bool, drawFlag *bool) error {
 				vRegisters[0xF] = vRegisters[xValue] >> 7 // most sig bit
 				vRegisters[xValue] <<= 1
 				programCounter += 2
+			default:
+				return fmt.Errorf("unknown opcode 0x%X", opcode)
 			}
 		case 0x9000: // 9XY0 counter to 5XY0
 			var xValue = (opcode & 0x0F00) >> 8
@@ -202,7 +198,7 @@ func EmulateCycle(clearFlag *bool, drawFlag *bool) error {
 
 			var rowNumber = int32(opcode & 0x000F)
 
-			vRegisters[0xF] = 0 // reset VF TODO understand why
+			vRegisters[0xF] = 0 // reset VF
 			for yLine := int32(0); yLine < rowNumber; yLine++ {
 				pixel := memory[int32(indexRegister)+yLine]
 				// fixed size of 8 per row
@@ -210,7 +206,9 @@ func EmulateCycle(clearFlag *bool, drawFlag *bool) error {
 					if (pixel & (0x80 >> xLine)) != 0 {
 						screenIndex := xIndex + xLine + ((yIndex + yLine) * winWidth)
 						// Avoid index out of bounds
-						screenIndex = screenIndex % (winWidth * winHeight)
+						if screenIndex >= winHeight*winHeight {
+							screenIndex = screenIndex % (winWidth * winHeight)
+						}
 						if screenState[screenIndex] == 1 {
 							vRegisters[0xF] = 1
 						}
@@ -237,6 +235,8 @@ func EmulateCycle(clearFlag *bool, drawFlag *bool) error {
 				} else {
 					programCounter += 2
 				}
+			default:
+				return fmt.Errorf("unknown opcode 0x%X", opcode)
 			}
 		case 0xF000: // FX??
 			var xValue = (opcode & 0x0F00) >> 8
@@ -296,11 +296,7 @@ func EmulateCycle(clearFlag *bool, drawFlag *bool) error {
 
 	if soundTimer > 0 {
 		if soundTimer == 1 {
-			// fmt.Println("BEEP")
 			go playBeep()
-			// if err := playBeep(); err != nil {
-			// 	return fmt.Errorf("failed to play beep: \n--> %w", err)
-			// }
 		}
 		soundTimer--
 	}
@@ -320,6 +316,7 @@ func spriteAddr(vx uint8) uint16 {
 	return fontSetOffset + value*5
 }
 
+// For debugging only
 // func printScreenState() {
 
 // 	fmt.Print("\n")
